@@ -1,75 +1,119 @@
-import pygame, sys, time, random
-from operator import sub
+import pygame
 from pygame.locals import *
+import random, math, sys
 
 pygame.init()
 
-windowSurface = pygame.display.set_mode((500, 400), 0, 32)
-pygame.display.set_caption("Paint")
-
+Windows = pygame.display.set_mode((500, 400), 0, 32) # Main Surface
+Antennas = [] #List of Antenna
 FPS = 40
 clock = pygame.time.Clock()
+NBR_ANTENNA = 40
+ANTENNA_RADIUS = 50
+
 BLACK = (0, 0, 0)
 WHITE = (255, 255, 255)
 RED = (255, 0, 0)
 GREEN = (0, 255, 0)
 BLUE = (0, 0, 255)
 SPEED = [10,10]
-def newcolour():
-	# any colour but black or white 
-	return (random.randint(100,250), random.randint(100,250), random.randint(100,250))
-
-sub = lambda l1,l2:[l1[k]-l2[k] for k in range(len(l1))]
-NBR_ANTENNA = 10
-ANTENNA_RADIUS = 40
 info = pygame.display.Info()
-sw = info.current_w
-sh = info.current_h
-def my_rand():
-	pass
-A_LST = [[random.randint(0,sw),random.randint(0,sh),ANTENNA_RADIUS,newcolour()] for k in range(NBR_ANTENNA)]
+SW = info.current_w #Screen Width
+SH = info.current_h #Screen Height
 
-# print A_LST
-windowSurface.fill(WHITE)
-dx,dy = SPEED[0],SPEED[1]
+newcolour = lambda :(random.randint(100,250), random.randint(100,250), random.randint(100,250))
+sub = lambda l1,l2:[l1[k]-l2[k] for k in range(len(l1))]
 
-k = 0 # Current Antenna In the list
-n = 1 # Number of Hits
-while True:
-	#Draw all antenna
-	windowSurface.fill(WHITE) #Clear Windows
-	for a in A_LST:
-		pygame.draw.circle(windowSurface, a[3] , (a[0],a[1]), a[2], 0)
-		nc = tuple(sub(list(a[3]),[100,100,100]))
-		print nc
-		# print a[3]
-		pygame.draw.circle(windowSurface, nc, (a[0],a[1]), ANTENNA_RADIUS/4, 0)
-	if(k <= NBR_ANTENNA - 1):
-		if A_LST[k][0] < 0 or A_LST[k][0] > sw:
-			dx = -dx #Change course
-			odx = dx
-			n+=1
+
+
+
+
+class Antenna:
+	def __init__(self,radius=random.randint(20,100),x="auto",y="auto",sx="auto",sy="auto",color="auto"):
+		self.radius = radius
+		self.x = random.randint(self.radius, SW-self.radius) if x == "auto" else x
+		self.y = random.randint(self.radius, SH-self.radius) if y == "auto" else y
+		self.speedx = 0.5*(random.random()+1.0) if sx == "auto" else sx
+		self.speedy = 0.5*(random.random()+1.0) if sy == "auto" else sy
+		self.color = newcolour() if color == "auto" else color
+	   	# self.mass = math.sqrt(self.radius)
+
+A_LST = [Antenna(radius=ANTENNA_RADIUS,sx=5,sy=5) for k in range(NBR_ANTENNA)] #List of Antenna
+
+
+def Collide(C1,C2):
+	C1Speed = math.sqrt((C1.speedx**2)+(C1.speedy**2))
+	XDiff = -(C1.x-C2.x)
+	YDiff = -(C1.y-C2.y)
+	if XDiff > 0:
+		if YDiff > 0:
+			Angle = math.degrees(math.atan(YDiff/XDiff))
+			XSpeed = -C1Speed*math.cos(math.radians(Angle))
+			YSpeed = -C1Speed*math.sin(math.radians(Angle))
+		elif YDiff < 0:
+			Angle = math.degrees(math.atan(YDiff/XDiff))
+			XSpeed = -C1Speed*math.cos(math.radians(Angle))
+			YSpeed = -C1Speed*math.sin(math.radians(Angle))
+	elif XDiff < 0:
+		if YDiff > 0:
+			Angle = 180 + math.degrees(math.atan(YDiff/XDiff))
+			XSpeed = -C1Speed*math.cos(math.radians(Angle))
+			YSpeed = -C1Speed*math.sin(math.radians(Angle))
+		elif YDiff < 0:
+			Angle = -180 + math.degrees(math.atan(YDiff/XDiff))
+			XSpeed = -C1Speed*math.cos(math.radians(Angle))
+			YSpeed = -C1Speed*math.sin(math.radians(Angle))
+	elif XDiff == 0:
+		if YDiff > 0:
+			Angle = -90
 		else:
-			pass
-		if A_LST[k][1] < 0 or A_LST[k][1] > sh:
-			dy = -dy #Change course
-			ody = dy
-			n+=1
+			Angle = 90
+		XSpeed = C1Speed*math.cos(math.radians(Angle))
+		YSpeed = C1Speed*math.sin(math.radians(Angle))
+	elif YDiff == 0:
+		if XDiff < 0:
+			Angle = 0
 		else:
-			pass
-		A_LST[k][0] += dx
-		A_LST[k][1] += dy
-		if n == 4:
-			n = 0
-			dx,dy=SPEED[0],SPEED[1]
-			k+=1
-			# dx,dy = 5,2
-			# k+=1
-	else:
-		k=0
-	pygame.display.update()
-	clock.tick(FPS)
+			Angle = 180
+		XSpeed = C1Speed*math.cos(math.radians(Angle))
+		YSpeed = C1Speed*math.sin(math.radians(Angle))
+	C1.speedx = XSpeed
+	C1.speedy = YSpeed
+def Move():
+	for Antenna in A_LST:
+		Antenna.x += Antenna.speedx
+		Antenna.y += Antenna.speedy
+def CollisionDetect():
+	for Antenna in A_LST:
+		if Antenna.x < Antenna.radius or Antenna.x > SW-Antenna.radius:    Antenna.speedx *= -1
+		if Antenna.y < Antenna.radius or Antenna.y > SH-Antenna.radius:    Antenna.speedy *= -1
+	for Antenna in A_LST:
+		for A2 in A_LST:
+			if Antenna != A2:
+				if math.sqrt(  ((Antenna.x-A2.x)**2)  +  ((Antenna.y-A2.y)**2)  ) <= (Antenna.radius+A2.radius):
+					Collide(Antenna,A2)
+def Draw():
+	Windows.fill(WHITE)
+	for Antenna in A_LST:
+		nc = tuple(sub(list(Antenna.color),[100,100,100]))
+		pygame.draw.circle(Windows,Antenna.color,(int(Antenna.x),int(SH-Antenna.y)),Antenna.radius)
+		pygame.draw.circle(Windows,nc,(int(Antenna.x),int(SH-Antenna.y)),Antenna.radius/4)
+	pygame.display.flip()
+def GetInput():
+	keystate = pygame.key.get_pressed()
 	for event in pygame.event.get():
-		if event.type == QUIT:
-			pygame.quit()
-			sys.exit()
+		if event.type == QUIT or keystate[K_ESCAPE]:
+			pygame.quit(); sys.exit()
+
+def main():
+	while True:
+		GetInput()
+		Move()
+		CollisionDetect()
+		Draw()
+		clock.tick(FPS)
+		for event in pygame.event.get():
+			if event.type == QUIT:
+				pygame.quit()
+				sys.exit()
+if __name__ == '__main__': main()
