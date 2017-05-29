@@ -8,8 +8,8 @@ Windows = pygame.display.set_mode((500, 400), 0, 32) # Main Surface
 Antennas = [] #List of Antenna
 FPS = 40
 clock = pygame.time.Clock()
-NBR_ANTENNA = 40
-ANTENNA_RADIUS = 50
+NBR_ANTENNA = 10
+ANTENNA_RADIUS = 30
 
 BLACK = (0, 0, 0)
 WHITE = (255, 255, 255)
