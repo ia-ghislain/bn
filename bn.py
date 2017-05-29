@@ -4,12 +4,14 @@ import random, math, sys
 
 pygame.init()
 
-Windows = pygame.display.set_mode((500, 400), 0, 32) # Main Surface
+Windows = pygame.display.set_mode((800, 800), 0, 32) # Main Surface
 Antennas = [] #List of Antenna
 FPS = 40
 clock = pygame.time.Clock()
-NBR_ANTENNA = 2
-ANTENNA_RADIUS = 30
+NBR_ANTENNA = 20
+ANTENNA_RADIUS = 40
+ANTENNA_RADIUS_MIN = 40 #Optional
+ANTENNA_RADIUS_MAX = 100 #Optional
 
 BLACK = (0, 0, 0)
 WHITE = (255, 255, 255)
@@ -35,10 +37,10 @@ sub = lambda l1,l2:[l1[k]-l2[k] for k in range(len(l1))]
 
 
 class Antenna:
-	def __init__(self,radius=random.randint(20,100),x="auto",y="auto",sx="auto",sy="auto",color="auto"):
-		self.radius = radius
-		self.x = random.uniform(R_x+self.radius, R_W-R_x-2*self.radius) if x == "auto" else x
-		self.y = random.uniform(R_y+self.radius, R_H-R_y-2*self.radius) if y == "auto" else y
+	def __init__(self,radius="auto",x="auto",y="auto",sx="auto",sy="auto",color="auto"):
+		self.radius = random.randint(ANTENNA_RADIUS_MIN,ANTENNA_RADIUS_MAX) if radius == "auto" else radius
+		self.x = random.uniform(SW//2, R_W-R_x-2*self.radius) if x == "auto" else x
+		self.y = random.uniform(R_y+self.radius-SH//4, R_H-R_y-2*self.radius) if y == "auto" else y
 		print "True" if R_x+self.radius < R_W-R_x-2*self.radius else "False"
 		print "True" if R_y+self.radius < R_W-R_x-2*self.radius else "False"
 		self.speedx = 0.5*(random.random()+1.0) if sx == "auto" else sx
@@ -47,7 +49,7 @@ class Antenna:
 		print (R_x+self.radius, R_W-self.radius)
 	   	# self.mass = math.sqrt(self.radius)
 
-A_LST = [Antenna(radius=ANTENNA_RADIUS,sx=5,sy=5) for k in range(NBR_ANTENNA)] #List of Antenna
+A_LST = [Antenna(radius="auto",sx=5,sy=5) for k in range(NBR_ANTENNA)] #List of Antenna
 
 
 def Collide(C1,C2):
@@ -94,8 +96,8 @@ def Move():
 		Antenna.y += Antenna.speedy
 def CollisionDetect():
 	for Antenna in A_LST:
-		if Antenna.x < R_x or Antenna.x > SW-R_x:    Antenna.speedx *= -1
-		if Antenna.y < -R_y or Antenna.y > R_H-R_y:    Antenna.speedy *= -1
+		if Antenna.x < R_x or Antenna.x > SW-R_x:    Antenna.speedx *= -.8
+		if Antenna.y < -R_y or Antenna.y > R_H-R_y:    Antenna.speedy *= -.8
 	for Antenna in A_LST:
 		for A2 in A_LST:
 			if Antenna != A2:
